@@ -299,6 +299,7 @@ These documents clearly define:
 ## 🚀 Running Locally
 
 ```bash
+pip install -r requirements.txt
 export KEYVAULT_MASTER_KEY=<base64-encoded-32-bytes>
 uvicorn main:app --reload
 ```
