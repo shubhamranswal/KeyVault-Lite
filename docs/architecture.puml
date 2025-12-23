@@ -1,0 +1,25 @@
+@startuml
+title KeyVault Lite - System Architecture
+
+actor "Client Service\n(payments, analytics)" as Client
+
+package "KeyVault Lite" {
+
+  component "API Layer\n(FastAPI)" as API
+  component "AuthN + RBAC" as AUTH
+  component "Key Management Service" as KEY
+  component "Crypto Engine\n(Envelope Encryption)" as CRYPTO
+  component "Audit Logger\n(Hash-Chained)" as AUDIT
+
+  database "Secure Storage\n(SQLite / PostgreSQL)" as DB
+}
+
+Client --> API : REST / JSON\nService Identity
+API --> AUTH : authenticate()\nauthorize()
+AUTH --> KEY : allow / deny
+KEY --> CRYPTO : encrypt/decrypt/sign
+CRYPTO --> DB : read/write encrypted keys
+KEY --> AUDIT : append log
+AUDIT --> DB : append-only logs
+
+@enduml

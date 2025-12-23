@@ -1,0 +1,33 @@
+@startuml
+title KeyVault Lite - Encryption Flow (Envelope Encryption)
+
+actor "Client Service" as Client
+participant "API Layer" as API
+participant "Auth + RBAC" as AUTH
+participant "Key Service" as KEY
+participant "Crypto Engine" as CRYPTO
+database "Key Store" as DB
+participant "Audit Logger" as AUDIT
+
+Client -> API : encrypt(plaintext)
+API -> AUTH : authenticate(service_id)
+AUTH -> API : authorized
+
+API -> KEY : request encrypt(key_id)
+KEY -> DB : fetch active key version
+DB -> KEY : encrypted KEK
+
+KEY -> CRYPTO : generate DEK
+CRYPTO -> CRYPTO : encrypt data with DEK
+CRYPTO -> KEY : ciphertext
+
+KEY -> CRYPTO : encrypt DEK with KEK
+CRYPTO -> KEY : encrypted DEK
+
+KEY -> AUDIT : log(action, key_id, version)
+AUDIT -> DB : append hash-chained log
+
+KEY -> API : ciphertext + encrypted DEK
+API -> Client : response
+
+@enduml
