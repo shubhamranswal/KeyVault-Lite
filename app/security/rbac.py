@@ -2,14 +2,19 @@ ROLE_PERMISSIONS = {
     "ADMIN": {
         "key_create",
         "key_rotate",
-        "key_revoke"
+        "key_revoke",
+        "encrypt",
+        "decrypt",
+        "audit_read",
     },
     "SERVICE": {
-        "key_create"
+        "key_create",
+        "encrypt",
+        "decrypt",
     },
     "AUDITOR": {
-        "audit_read"
-    }
+        "audit_read",
+    },
 }
 
 def require_permission(role: str, permission: str):

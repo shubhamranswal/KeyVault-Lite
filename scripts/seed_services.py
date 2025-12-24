@@ -1,20 +1,22 @@
 from app.db import get_db
 
-def seed_auditor():
+def seed_services():
     conn = get_db()
 
-    conn.execute(
+    conn.executemany(
         """
         INSERT OR IGNORE INTO services (id, name, role, active)
         VALUES (?, ?, ?, ?)
         """,
-        ("svc-auditor", "audit-service", "AUDITOR", 1)
+        [
+            ("svc-payments", "payments-service", "SERVICE", 1),
+            ("svc-auditor", "audit-service", "AUDITOR", 1),
+        ]
     )
 
     conn.commit()
     conn.close()
-
-    print("✅ Auditor service seeded")
+    print("✅ Services seeded")
 
 if __name__ == "__main__":
-    seed_auditor()
+    seed_services()

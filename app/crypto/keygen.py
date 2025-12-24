@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives import serialization
 
 def generate_key(key_type: str, size: int | None = None) -> bytes:
+    print(f"Generating key of type {key_type} with size {size}" )
     if key_type == "AES":
         return os.urandom(size // 8)
 

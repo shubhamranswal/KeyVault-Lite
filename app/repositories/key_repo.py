@@ -31,3 +31,16 @@ def add_key_version(key_id, encrypted_key):
     )
     conn.commit()
     conn.close()
+
+def get_active_key_version(key_id: str):
+    conn = get_db()
+    row = conn.execute(
+        """
+        SELECT id, version, encrypted_key
+        FROM key_versions
+        WHERE key_id = ? AND status = 'ACTIVE'
+        """,
+        (key_id,)
+    ).fetchone()
+    conn.close()
+    return row

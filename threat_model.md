@@ -1,4 +1,4 @@
-# 🔐 Threat Model — KeyVault Lite
+# 🔐 Threat Model - KeyVault Lite
 
 This document outlines the security assumptions, threat model, and mitigations for KeyVault Lite.
 

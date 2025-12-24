@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" />
   <img src="https://github.com/shubhamranswal/keyvault-lite/actions/workflows/ci.yml/badge.svg" />
-  <img src="https://img.shields.io/badge/version-v0.1.0-brightgreen.svg" />
+  <img src="https://img.shields.io/badge/version-v0.1.4-brightgreen.svg" />
   <br />
   <img src="https://img.shields.io/badge/python-3.10+-blue.svg" />
   <img src="https://img.shields.io/badge/FastAPI-005571?logo=fastapi" />
@@ -18,7 +18,7 @@
 
 ## 🧠 What is KeyVault Lite?
 
-**KeyVault Lite is a backend service that securely manages cryptographic keys and performs cryptographic operations on behalf of other services — without ever exposing raw keys.**
+**KeyVault Lite is a backend service that securely manages cryptographic keys and performs cryptographic operations on behalf of other services - without ever exposing raw keys.**
 
 It is conceptually similar to:
 - AWS KMS
