@@ -9,6 +9,7 @@ ROLE_PERMISSIONS = {
     },
     "SERVICE": {
         "key_create",
+        "key_rotate",
         "encrypt",
         "decrypt",
     },

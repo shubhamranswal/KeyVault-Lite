@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" />
   <img src="https://github.com/shubhamranswal/keyvault-lite/actions/workflows/ci.yml/badge.svg" />
-  <img src="https://img.shields.io/badge/version-v0.1.4-brightgreen.svg" />
+  <img src="https://img.shields.io/badge/version-v0.1.5-brightgreen.svg" />
   <br />
   <img src="https://img.shields.io/badge/python-3.10+-blue.svg" />
   <img src="https://img.shields.io/badge/FastAPI-005571?logo=fastapi" />
@@ -213,13 +213,26 @@ CREATE TABLE audit_logs (
 
 ---
 
+### Key Revocation Semantics
+
+KeyVault Lite implements a conservative key revocation model.
+
+Once a key is revoked:
+- New encryption operations are blocked immediately
+- Access to previously encrypted data may also be restricted depending on repository-level filtering
+- This design favors security and simplicity over availability
+
+A soft-revocation model (allowing decryption after revocation) is discussed as an alternative design in the threat model.
+
+---
+
 ## 🔐 RBAC Model
 
-| Role    | Permissions                                      |
-| ------- | ------------------------------------------------ |
-| ADMIN   | generate, rotate, revoke, encrypt, decrypt, sign |
-| SERVICE | encrypt, decrypt, sign, verify                   |
-| AUDITOR | read audit logs                                  |
+| Role    | Permissions                                                      |
+| ------- | ---------------------------------------------------------------- |
+| ADMIN   | key_create, key_rotate, key_revoke, encrypt, decrypt, audit_read |
+| SERVICE | key_create, key_rotate, encrypt, decrypt,                        |
+| AUDITOR | audit_read                                                       |
 
 Authorization is enforced **before every operation**.
 
@@ -301,7 +314,7 @@ These documents clearly define:
 ```bash
 pip install -r requirements.txt
 export KEYVAULT_MASTER_KEY=<base64-encoded-32-bytes>
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 ```
 
 ---
@@ -325,6 +338,18 @@ KeyVault Lite models how real KMS systems think internally:
 * Auditability is non-negotiable
 
 It demonstrates **system-level security engineering**, not just API development.
+
+---
+
+## 🚧 Planned Extensions
+
+The following features are intentionally out of scope for the current implementation:
+
+- Asymmetric signing and verification (RSA/ECDSA)
+- Signature-only key purposes
+- Public key export for verification
+
+These extensions would follow the same key-versioning, RBAC, and audit principles demonstrated here.
 
 ---
 

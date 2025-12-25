@@ -8,15 +8,16 @@ from app.security.auth import authenticate_service
 from app.security.rbac import require_permission
 from app.services.audit_service import append_audit_log
 from app.repositories.audit_repo import fetch_audit_logs
-from app.repositories.key_repo import get_active_key_version
+from app.repositories.key_repo import get_active_key_version, get_key_metadata, revoke_key, get_key_version
 from app.crypto.envelope import encrypt_with_envelope
 from app.crypto.envelope import decrypt_with_envelope
 from app.crypto.aes_gcm import decrypt_bytes
+from app.services.key_rotation_service import rotate_key
 
 app = FastAPI(
     title="KeyVault Lite",
-    description="Key Management Service",
-    version="0.1.4"
+    description="KeyVault Lite is a backend service that safely stores encryption keys and performs crypto operations on behalf of other services without ever exposing the keys.",
+    version="0.1.5"
 )
 
 @app.on_event("startup")
@@ -95,16 +96,30 @@ def encrypt_data(
 ):
     require_permission(service["role"], "encrypt")
 
-    key_row = get_active_key_version(key_id)
-    if not key_row:
+    key = get_key_metadata(key_id)
+    if not key:
         raise HTTPException(status_code=404, detail="Key not found")
-    if key_row["purpose"] != "ENCRYPT":
+
+    if key["status"] != "ACTIVE":
+        raise HTTPException(
+            status_code=403,
+            detail="Key is revoked and cannot be used for encryption"
+        )
+
+    if key["purpose"] != "ENCRYPT":
         raise HTTPException(
             status_code=403,
             detail="Key not allowed for encryption"
         )
 
-    # Decrypt KEK
+    key_row = get_active_key_version(key_id)
+    if not key_row:
+        # This should practically never happen, but is still correct
+        raise HTTPException(
+            status_code=409,
+            detail="No active key version available"
+        )
+
     kek = decrypt_bytes(settings.master_key, key_row["encrypted_key"])
 
     result = encrypt_with_envelope(
@@ -134,9 +149,22 @@ def decrypt_data(
 ):
     require_permission(service["role"], "decrypt")
 
-    key_row = get_active_key_version(key_id)
-    if not key_row:
+    key = get_key_metadata(key_id)
+    if not key:
         raise HTTPException(status_code=404, detail="Key not found")
+
+    key_row = get_key_version(
+        key_id=key_id,
+        version=payload.key_version
+    )
+    if not key_row:
+        raise HTTPException(status_code=404, detail="Key version not found")
+
+    if key_row["status"] == "REVOKED":
+        raise HTTPException(
+            status_code=403,
+            detail="Key version is revoked"
+        )
 
     kek = decrypt_bytes(settings.master_key, key_row["encrypted_key"])
 
@@ -154,6 +182,59 @@ def decrypt_data(
         result="SUCCESS"
     )
 
+    return {"plaintext": plaintext.decode()}
+
+@app.post("/keys/{key_id}/rotate")
+def rotate_key_endpoint(
+    key_id: str,
+    service = Depends(authenticate_service)
+):
+    require_permission(service["role"], "key_rotate")
+
+    key = get_key_metadata(key_id)  # simple SELECT from keys table
+    if not key:
+        raise HTTPException(status_code=404, detail="Key not found")
+
+    new_version = rotate_key(
+        key_id=key_id,
+        key_type=key["type"],
+        size=None if key["type"] != "AES" else 256
+    )
+
+    append_audit_log(
+        service_id=service["id"],
+        action="key_rotate",
+        key_id=key_id,
+        key_version=new_version,
+        result="SUCCESS"
+    )
+
     return {
-        "plaintext": plaintext.decode()
+        "key_id": key_id,
+        "new_version": new_version
+    }
+
+@app.post("/keys/{key_id}/revoke")
+def revoke_key_endpoint(
+    key_id: str,
+    service = Depends(authenticate_service)
+):
+    require_permission(service["role"], "key_revoke")
+
+    try:
+        revoke_key(key_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    append_audit_log(
+        service_id=service["id"],
+        action="key_revoke",
+        key_id=key_id,
+        key_version=None,
+        result="SUCCESS"
+    )
+
+    return {
+        "key_id": key_id,
+        "status": "REVOKED"
     }

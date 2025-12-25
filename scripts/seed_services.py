@@ -9,6 +9,7 @@ def seed_services():
         VALUES (?, ?, ?, ?)
         """,
         [
+            ("svc-admin", "admin-service", "ADMIN", 1),
             ("svc-payments", "payments-service", "SERVICE", 1),
             ("svc-auditor", "audit-service", "AUDITOR", 1),
         ]
